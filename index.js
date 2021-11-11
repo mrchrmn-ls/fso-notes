@@ -1,7 +1,28 @@
 const express = require("express");
 const app = express();
 
-app.use(express.json());
+
+function requestLogger(req, res, next) {
+  console.log("Method:", req.method);
+  console.log("Path:", req.path);
+  console.log("Bdy:", req.body);
+  console.log("---");
+  next();
+}
+
+
+function unknownEndpoint(req, res) {
+  res.status(404).send({
+    error: "Unknown endpoint"
+  });
+}
+
+
+function generateId(notes) {
+  const maxId = notes.length > 0 ? Math.max(...notes.map(note => note.id)) : 0;
+  return maxId +1;
+}
+
 
 let notes = [
   {
@@ -24,6 +45,10 @@ let notes = [
   }
 ];
 
+
+app.use(express.json());
+
+app.use(requestLogger);
 
 app.get("/", (_, res) => {
   res.send("<h1>Hello, World!</h1>");
@@ -55,12 +80,6 @@ app.delete("/api/notes/:id", (req, res) => {
 });
 
 
-function generateId(notes) {
-  const maxId = notes.length > 0 ? Math.max(...notes.map(note => note.id)) : 0;
-  return maxId +1;
-}
-
-
 app.post("/api/notes", (req, res) => {
   if (!req.body.content) {
     return res.status(400).json({
@@ -79,6 +98,8 @@ app.post("/api/notes", (req, res) => {
   res.json(note);
 });
 
+
+app.use(unknownEndpoint);
 
 const PORT = 3001;
 app.listen(PORT);
