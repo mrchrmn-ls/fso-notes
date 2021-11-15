@@ -1,103 +1,11 @@
-require("dotenv").config();
+const http = require("http");
 
-const express = require("express");
-const cors = require("cors");
-const app = express();
+const app = require("./app");
+const config = require("./utils/config");
+const log = require("./utils/log");
 
-const Note = require("./models/note");
+const server = http.createServer(app);
 
-
-function requestLogger(req, _, next) {
-  console.log("Method:", req.method);
-  console.log("Path:", req.path);
-  console.log("Bdy:", req.body);
-  console.log("---");
-  next();
-}
-
-
-function unknownEndpoint(_, res) {
-  res.status(404).send({
-    error: "Unknown endpoint"
-  });
-}
-
-function errorHandler(err, _, res, next) {
-  console.log(err.message);
-
-  if (err.name === "CastError") {
-    return res.status(400).send({ error: "malformatted id" });
-  }
-
-  if (err.name === "ValidationError") {
-    return res.status(400).json({ error: err.message });
-  }
-
-  next(err);
-}
-
-
-app.use(express.static("build"));
-app.use(cors());
-app.use(express.json());
-app.use(requestLogger);
-
-
-app.get("/api/notes", (_, res) => {
-  Note.find({}).then(notes => res.json(notes));
-});
-
-
-app.get("/api/notes/:id", (req, res, next) => {
-  Note.findById(req.params.id).then(note => {
-    if (note) {
-      res.json(note);
-    } else {
-      res.status(404).end();
-    }
-  })
-  .catch(error => next(error));
-});
-
-
-app.delete("/api/notes/:id", (req, res, next) => {
-  Note.findByIdAndRemove(req.params.id)
-    .then(() => res.status(204).end())
-    .catch(error => next(error));
-});
-
-
-app.post("/api/notes", (req, res, next) => {
-  const note = new Note({
-    content: req.body.content.trim(),
-    important: req.body.important || false,
-    date: new Date()
-  });
-
-  note.save()
-    .then(savedNote => savedNote.toJSON())
-    .then(formattedNote => res.json(formattedNote))
-    .catch(error => next(error));
-});
-
-
-app.put("/api/notes/:id", (req, res, next) => {
-  const note = {
-    content: req.body.content,
-    important: req.body.important
-  };
-
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
-    .then(updatedNote => res.json(updatedNote))
-    .catch(error => next(error));
-});
-
-
-app.use(unknownEndpoint);
-app.use(errorHandler);
-
-
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(config.PORT, () => {
+  log.info(`Server listening on port ${config.PORT}...`);
 });
