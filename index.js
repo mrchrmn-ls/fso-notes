@@ -29,6 +29,10 @@ function errorHandler(err, _, res, next) {
     return res.status(400).send({ error: "malformatted id" });
   }
 
+  if (err.name === "ValidationError") {
+    return res.status(400).jason({ error: err.message });
+  }
+
   next(err);
 }
 
@@ -63,7 +67,7 @@ app.delete("/api/notes/:id", (req, res, next) => {
 });
 
 
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", (req, res, next) => {
   if (!req.body.content) {
     return res.status(400).json({
       error: "content missing"
@@ -76,7 +80,10 @@ app.post("/api/notes", (req, res) => {
     date: new Date()
   });
 
-  note.save().then(savedNote => res.json(savedNote));
+  note.save()
+    .then(savedNote => savedNote.toJSON())
+    .then(formattedNote => res.json(formattedNote))
+    .catch(error => next(error));
 });
 
 
