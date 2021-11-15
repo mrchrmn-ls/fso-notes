@@ -30,7 +30,7 @@ function errorHandler(err, _, res, next) {
   }
 
   if (err.name === "ValidationError") {
-    return res.status(400).jason({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 
   next(err);
@@ -68,14 +68,8 @@ app.delete("/api/notes/:id", (req, res, next) => {
 
 
 app.post("/api/notes", (req, res, next) => {
-  if (!req.body.content) {
-    return res.status(400).json({
-      error: "content missing"
-    });
-  }
-
   const note = new Note({
-    content: req.body.content,
+    content: req.body.content.trim(),
     important: req.body.important || false,
     date: new Date()
   });
