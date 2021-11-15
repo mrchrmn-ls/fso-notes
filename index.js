@@ -16,32 +16,50 @@ function requestLogger(req, _, next) {
 }
 
 
-function unknownEndpoint(req, res) {
+function unknownEndpoint(_, res) {
   res.status(404).send({
     error: "Unknown endpoint"
   });
 }
 
+function errorHandler(err, _, res, next) {
+  console.log(err.message);
+
+  if (err.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" });
+  }
+
+  next(err);
+}
+
 
 app.use(express.static("build"));
-
 app.use(cors());
-
 app.use(express.json());
-
 app.use(requestLogger);
+
 
 app.get("/api/notes", (_, res) => {
   Note.find({}).then(notes => res.json(notes));
 });
 
 
-app.get("/api/notes/:id", (req, res) => {
-  Note.findById(req.params.id).then(note => res.json(note));
+app.get("/api/notes/:id", (req, res, next) => {
+  Note.findById(req.params.id).then(note => {
+    if (note) {
+      res.json(note);
+    } else {
+      res.status(404).end();
+    }
+  })
+  .catch(error => next(error));
 });
 
 
-app.delete("/api/notes/:id", (req, res) => {
+app.delete("/api/notes/:id", (req, res, next) => {
+  Note.findByIdAndRemove(req.params.id)
+    .then(() => res.status(204).end())
+    .catch(error => next(error));
 });
 
 
@@ -62,7 +80,21 @@ app.post("/api/notes", (req, res) => {
 });
 
 
+app.put("/api/notes/:id", (req, res, next) => {
+  const note = {
+    content: req.body.content,
+    important: req.body.important
+  };
+
+  Note.findByIdAndUpdate(req.params.id, note, { new: true })
+    .then(updatedNote => res.json(updatedNote))
+    .catch(error => next(error));
+});
+
+
 app.use(unknownEndpoint);
+app.use(errorHandler);
+
 
 const PORT = process.env.PORT;
 app.listen(PORT, ()=> {
