@@ -58,9 +58,7 @@ app.post("/api/notes", (req, res) => {
     date: new Date()
   });
 
-  note.save().then(savedNote => {
-    res.json(savedNote);
-  });
+  note.save().then(savedNote => res.json(savedNote));
 });
 
 
