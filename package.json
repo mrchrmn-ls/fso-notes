@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "jest --verbose",
-    "dev": "nodemon index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
     "build:ui": "rm -rf build && cd ../fullstack-open/part2/notes/ && npm run build --prod &&  cp -r build ../../../fso-notes",
     "deploy": "git push heroku main",
     "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",
@@ -30,6 +30,7 @@
     "mongoose": "^6.0.12"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "eslint": "^8.2.0",
     "jest": "^27.3.1",
     "nodemon": "^2.0.15"
