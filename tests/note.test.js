@@ -10,9 +10,10 @@ const api = supertest(app);
 beforeEach(async () => {
   await Note.deleteMany({});
 
-  for (let index = 0; index < helper.initialNotes.length; index += 1) {
-    await new Note(helper.initialNotes[index]).save();
-  }
+  const promises = helper.initialNotes.map(note => new Note(note))
+                                      .map(note => note.save());
+
+  await Promise.all(promises);
 });
 
 
