@@ -10,7 +10,7 @@ notesRouter.get("/", async (_, res) => {
 
 notesRouter.get("/:id", async (req, res, next) => {
   try {
-    let note = Note.findById(req.params.id);
+    let note = await Note.findById(req.params.id);
 
     if (note) {
       res.json(note);
