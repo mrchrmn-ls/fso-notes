@@ -1,5 +1,6 @@
 const notesRouter = require("express").Router();
 const Note = require("../models/note");
+const User = require("../models/user");
 
 
 notesRouter.get("/", async (_, res) => {
@@ -26,15 +27,24 @@ notesRouter.delete("/:id", async (req, res) => {
 
 
 notesRouter.post("/", async (req, res) => {
-  const content = req.body.content ? req.body.content.trim() : null;
+  const user = await User.findById(req.body.userId);
+
+  console.log("\n== user ==\n", user, "\n");
 
   const note = new Note({
-    content,
+    content: req.body.content ? req.body.content.trim() : null,
     important: req.body.important || false,
-    date: new Date()
+    date: new Date(),
+    user: user._id
   });
 
+  console.log("\n== note ==\n", note, "\n");
+
   const savedNote = await note.save();
+
+  user.notes = user.notes.concat(savedNote._id);
+  await user.save();
+
   res.status(201).json(savedNote);
 });
 
