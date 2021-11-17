@@ -78,7 +78,7 @@ describe("when there are some notes saved", () => {
 
       await api.post("/api/notes")
                .send(newNote)
-               .expect(200)
+               .expect(201)
                .expect("Content-Type", /application\/json/);
 
       const notesInDB = await helper.getNotesInDB();
