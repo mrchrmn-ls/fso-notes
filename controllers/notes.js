@@ -40,8 +40,6 @@ notesRouter.delete("/:id", async (req, res) => {
 
 
 notesRouter.post("/", async (req, res) => {
-  console.log("posting");
-
   const token = getTokenFrom(req);
 
   const decodedToken = jwt.verify(token, process.env.SECRET);
