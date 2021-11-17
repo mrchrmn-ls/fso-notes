@@ -1,6 +1,8 @@
+const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const supertest = require("supertest");
 const app = require("../app");
+const User = require("../models/user");
 const Note = require("../models/note");
 const helper = require("./test_helper");
 
@@ -13,7 +15,62 @@ beforeEach(async () => {
 });
 
 
-describe("when there are some notes saved", () => {
+describe("when there is initially one user in db", () => {
+  beforeEach(async () => {
+    await User.deleteMany({});
+
+    const passwordHash = await bcrypt.hash("sekret", 10);
+    const user = new User({ username: "root", passwordHash });
+
+    await user.save();
+  });
+
+
+  test("creation succeeds with a fresh username", async () => {
+    const initialList = await helper.getAllInDB(User);
+
+    const newUser = {
+      username: "mluukkai",
+      name: "Matti Luukkainen",
+      password: "salainen",
+    };
+
+    await api.post("/api/users")
+             .send(newUser)
+             .expect(201)
+             .expect("Content-Type", /application\/json/);
+
+    const updatedList = await helper.getAllInDB(User);
+    expect(updatedList).toHaveLength(initialList.length + 1);
+
+    const usernames = updatedList.map(user => user.username);
+    expect(usernames).toContain(newUser.username);
+  });
+
+
+  test("creation fails with proper statuscode and message if username already taken", async () => {
+    const initialList = await helper.getAllInDB(User);
+
+    const newUser = {
+      username: "root",
+      name: "Superuser",
+      password: "salainen",
+    };
+
+    const response = await api.post("/api/users")
+                            .send(newUser)
+                            .expect(400)
+                            .expect("Content-Type", /application\/json/);
+
+    expect(response.body.error).toContain("`username` to be unique");
+
+    const updatedList = await helper.getAllInDB(User);
+    expect(updatedList).toHaveLength(initialList.length);
+  });
+});
+
+
+xdescribe("when there are some notes saved", () => {
   test("notes are returned as json", async () => {
     await api.get("/api/notes")
              .expect(200)
@@ -38,7 +95,7 @@ describe("when there are some notes saved", () => {
 
   describe("viewing a specific note", () => {
     test("succeeds with valid id", async () => {
-      const notesInDB = await helper.getNotesInDB();
+      const notesInDB = await helper.getAllInDB(Note);
 
       const noteToView = notesInDB[0];
 
@@ -81,7 +138,7 @@ describe("when there are some notes saved", () => {
                .expect(201)
                .expect("Content-Type", /application\/json/);
 
-      const notesInDB = await helper.getNotesInDB();
+      const notesInDB = await helper.getAllInDB(Note);
       expect(notesInDB).toHaveLength(helper.initialNotes.length + 1);
 
       const contents = notesInDB.map(note => note.content);
@@ -101,7 +158,7 @@ describe("when there are some notes saved", () => {
                .send(newNote)
                .expect(400);
 
-      const notesInDB = await helper.getNotesInDB();
+      const notesInDB = await helper.getAllInDB(Note);
       expect(notesInDB).toHaveLength(helper.initialNotes.length);
     });
   });
@@ -109,12 +166,12 @@ describe("when there are some notes saved", () => {
 
   describe("deletion of a note", () => {
     test("succeeds with status code 204 if id is valid", async () => {
-      const noteToDelete = await helper.getFirstNote();
+      const noteToDelete = await helper.getFirstItem(Note);
 
       await api.delete(`/api/notes/${noteToDelete.id}`)
-          .expect(204);
+               .expect(204);
 
-      const remainingNotes = await helper.getNotesInDB();
+      const remainingNotes = await helper.getAllInDB(Note);
 
       expect(remainingNotes).toHaveLength(helper.initialNotes.length - 1);
     });

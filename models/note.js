@@ -6,11 +6,17 @@ const noteSchema = new mongoose.Schema({
     minLength: 5,
     required: true
   },
+
   date: {
     type: Date,
     required: true
   },
-  important: Boolean
+
+  important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }
 });
 
 noteSchema.set("toJSON", {
@@ -21,4 +27,6 @@ noteSchema.set("toJSON", {
   }
 });
 
-module.exports = mongoose.model("Note", noteSchema);
+const Note = mongoose.model("Note", noteSchema);
+
+module.exports = Note;

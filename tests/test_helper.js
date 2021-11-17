@@ -25,17 +25,18 @@ async function getNonexisitingId() {
 }
 
 
-async function getNotesInDB() {
-  const notes = await Note.find({});
-  return notes.map(note => note.toJSON());
+async function getAllInDB(model) {
+  const list = await model.find({});
+  return list.map(item => item.toJSON());
 }
 
 
-async function getFirstNote() {
-  const allNotes = await getNotesInDB();
-  return allNotes[0];
+async function getFirstItem(model) {
+  const parsedList = await getAllInDB(model);
+  return parsedList[0];
 }
+
 
 module.exports = {
-  initialNotes, getNonexisitingId, getNotesInDB, getFirstNote
+  initialNotes, getNonexisitingId, getAllInDB, getFirstItem
 };
