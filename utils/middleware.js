@@ -18,11 +18,23 @@ function errorHandler(err, _, res, next) {
   log.info(err.message);
 
   if (err.name === "CastError") {
-    return res.status(400).send({ error: "malformatted id" });
+    res.status(400).send({ error: "malformatted id" });
+    return null;
   }
 
   if (err.name === "ValidationError") {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
+    return null;
+  }
+
+  if (err.name === "JsonWebTokenError") {
+    res.status(401).json(({ error: "invalid token" }));
+    return null;
+  }
+
+  if (err.name === "TokenExpiredError") {
+    res.status(401).json({ error: "token expired" });
+    return null;
   }
 
   next(err);
