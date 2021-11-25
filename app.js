@@ -13,6 +13,11 @@ const notesRouter = require("./controllers/notes");
 const usersRouter = require("./controllers/users");
 const loginRouter = require("./controllers/login");
 
+if (process.env.NODE_ENV === "test") {
+  const testsRouter = require("./controllers/tests");
+  app.use("/api/tests", testsRouter);
+}
+
 mongoose.connect(config.MONGODB_URL)
   .then(() => {
     log.info("connected to MongoDB");
